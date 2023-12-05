@@ -55,24 +55,19 @@ fn main(){
 
     let mut angle: i32 = 0;
 
-    // get the strand of LEDs on channel 1
-    let leds = controller.leds_mut(0);
-    // set the first LED to white (with the configured
-    // strip above, this is BGRW)
-
     loop {
         angle = (angle + 1) % 360;
 
-        let mut last_led = [0, 0, 0, 0];
-        for led in leds {
-            let current_led = *led;
-            *led = last_led;
-            last_led = current_led;
+        {
+            let leds = controller.leds_mut(0);
+            let mut last_led = [0, 0, 0, 0];
+            for led in leds {
+                let current_led = *led;
+                *led = last_led;
+                last_led = current_led;
+            }
         }
 
         controller.render().unwrap();
     }
-
-
-    // render it to the strand
 }
