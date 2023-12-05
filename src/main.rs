@@ -1,13 +1,14 @@
-use rs_ws281x::ControllerBuilder;
+use rs_ws281x::{ControllerBuilder, ChannelBuilder, StripType};
 
 fn main(){
 
-    let controller = ControllerBuilder::new()
+    let mut controller = match ControllerBuilder::new()
         // default
         .freq(800_000)
         // default
         .dma(10)
         .channel(
+            0,
             ChannelBuilder::new()
                 .pin(18)
                 .count(10)
@@ -15,7 +16,13 @@ fn main(){
                 .brightness(255)
                 .build()
         )
-        .build();
+        .build() {
+        Ok(c) => c,
+        Err(e) => {
+            println!("Unable to setup led controller: {}", e);
+            return;
+        }
+    };
 
     // get the strand of LEDs on channel 1
     let leds = controller.leds_mut(0);
@@ -24,5 +31,11 @@ fn main(){
     leds[0] = [255, 255, 255, 0];
 
     // render it to the strand
-    controller.render();
+    match controller.render() {
+        Ok(_) => {},
+        Err(e) => {
+            println!("Unable to render: {}", e);
+            return;
+        }
+    }
 }
