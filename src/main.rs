@@ -1,6 +1,6 @@
 use rs_ws281x::{ControllerBuilder, ChannelBuilder, StripType};
 
-fn hue_to_rgb(h: f64, s: f64, l: f64) -> (i32, i32, i32) {
+fn hue_to_rgb(h: f64, s: f64, l: f64) -> (u8, u8, u8) {
     let c = (1.0 - (2.0 * l - 1.0).abs()) * s;
     let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
     let m = l - c / 2.0;
@@ -20,9 +20,9 @@ fn hue_to_rgb(h: f64, s: f64, l: f64) -> (i32, i32, i32) {
     };
 
     (
-        ((r + m) * 255.0) as i32,
-        ((g + m) * 255.0) as i32,
-        ((b + m) * 255.0) as i32,
+        ((r + m) * 255.0) as u8,
+        ((g + m) * 255.0) as u8,
+        ((b + m) * 255.0) as u8,
     )
 }
 
@@ -66,6 +66,11 @@ fn main(){
                 *led = last_led;
                 last_led = current_led;
             }
+        }
+        {
+            let leds = controller.leds_mut(0);
+            let res = hue_to_rgb(angle as f64, 1.0, 0.5);
+            leds[0] = [res.2, res.1, res.0, 0];
         }
 
         controller.render().unwrap();
