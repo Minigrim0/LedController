@@ -1,4 +1,5 @@
 use rs_ws281x::{ControllerBuilder, ChannelBuilder, StripType};
+use std::{thread, time};
 
 fn hue_to_rgb(h: f64, s: f64, l: f64) -> (u8, u8, u8) {
     let c = (1.0 - (2.0 * l - 1.0).abs()) * s;
@@ -27,7 +28,6 @@ fn hue_to_rgb(h: f64, s: f64, l: f64) -> (u8, u8, u8) {
 }
 
 fn main(){
-
     const WHEEL_LENGTH: i32 = 78;
     const STRIP_LENGTH: i32 = 96;
 
@@ -74,5 +74,6 @@ fn main(){
         }
 
         controller.render().unwrap();
+        thread::sleep(time::Duration::from_millis(20));
     }
 }
