@@ -1,3 +1,5 @@
+use std::thread::current;
+
 use rs_ws281x::Controller;
 
 use crate::animation::Animation;
@@ -34,14 +36,19 @@ impl Animation for Rainbow {
     /// * `bool` - True if the animation is still running, false otherwise
     fn next_frame(&mut self, controller: &mut Controller) -> bool {
         self.angle = (self.angle + 1) % 360;
+        let mut still_running = self.running;
 
         {
+
             let leds = controller.leds_mut(0);
             let mut last_led = [0, 0, 0, 0];
             for index in 0..self.wheel_length {
                 let current_led = leds[index as usize];
                 leds[index as usize] = last_led;
                 last_led = current_led;
+                if current_led != [0, 0, 0, 0] {
+                    still_running = true;
+                }
             }
             for index in self.wheel_length..self.strip_length {
                 if leds[index as usize][0] < 127 && self.running {
@@ -55,6 +62,9 @@ impl Animation for Rainbow {
                 } else {
                     leds[index as usize] = [127, 127, 127, 0];
                 }
+                if leds[index as usize] != [0, 0, 0, 0] {
+                    still_running = true;
+                }
             }
         }
         if self.running {
@@ -66,7 +76,7 @@ impl Animation for Rainbow {
             leds[0] = [0, 0, 0, 0]; // Turn off the first led (will propagate to the rest of the strip)
         }
 
-        self.running || controller.leds(0)[(self.wheel_length - 1) as usize] != [0, 0, 0, 0]
+        still_running
     }
 
     fn start(&mut self) -> () {
