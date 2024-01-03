@@ -44,7 +44,17 @@ impl Animation for Rainbow {
                 last_led = current_led;
             }
             for index in self.wheel_length..self.strip_length {
-                leds[index as usize] = [127, 127, 127, 0];
+                if leds[index as usize][0] < 127 && self.running {
+                    for elem in 0..2 {
+                        leds[index as usize][elem] += 1;
+                    }
+                } else if leds[index as usize][0] > 0 && !self.running {
+                    for elem in 0..2 {
+                        leds[index as usize][elem] -= 1;
+                    }
+                } else {
+                    leds[index as usize] = [127, 127, 127, 0];
+                }
             }
         }
         if self.running {
