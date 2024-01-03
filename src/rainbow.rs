@@ -1,5 +1,3 @@
-use std::thread::current;
-
 use rs_ws281x::Controller;
 
 use crate::animation::Animation;
