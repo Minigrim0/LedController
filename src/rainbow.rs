@@ -66,4 +66,12 @@ impl Animation for Rainbow {
     fn stop(&mut self) -> () {
         self.running = false;
     }
+
+    fn stopping(&self) -> bool {
+        !self.running
+    }
+
+    fn name(&self) -> &str {
+        "rainbow"
+    }
 }
