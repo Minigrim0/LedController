@@ -38,7 +38,7 @@ impl Animation for Rainbow {
         {
             let leds = controller.leds_mut(0);
             let mut last_led = [0, 0, 0, 0];
-            for index in 1..self.wheel_length {
+            for index in 0..self.wheel_length {
                 let current_led = leds[index as usize];
                 leds[index as usize] = last_led;
                 last_led = current_led;
