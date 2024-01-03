@@ -1,37 +1,54 @@
 use rs_ws281x::{ControllerBuilder, ChannelBuilder, StripType};
+use rumqttc::{MqttOptions, Client, QoS};
 use std::{thread, time};
+use std::sync::{Arc, Mutex};
 
-fn hue_to_rgb(h: f64, s: f64, l: f64) -> (u8, u8, u8) {
-    let c = (1.0 - (2.0 * l - 1.0).abs()) * s;
-    let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
-    let m = l - c / 2.0;
+use crate::animation::Animation;
 
-    let (r, g, b) = if h < 60.0 {
-        (c, x, 0.0)
-    } else if h < 120.0 {
-        (x, c, 0.0)
-    } else if h < 180.0 {
-        (0.0, c, x)
-    } else if h < 240.0 {
-        (0.0, x, c)
-    } else if h < 300.0 {
-        (x, 0.0, c)
-    } else {
-        (c, 0.0, x)
-    };
-
-    (
-        ((r + m) * 255.0) as u8,
-        ((g + m) * 255.0) as u8,
-        ((b + m) * 255.0) as u8,
-    )
-}
+pub mod color;
+pub mod animation;
+pub mod rainbow;
 
 fn main(){
     const WHEEL_LENGTH: i32 = 78;
     const STRIP_LENGTH: i32 = 96;
 
-    let mut controller = match ControllerBuilder::new()
+    let mut mqttoptions = MqttOptions::new("rust_client", "trappe.local", 1883);
+    mqttoptions.set_keep_alive(time::Duration::new(5, 0));
+
+    let (mut client, mut connection) = Client::new(mqttoptions, 10);
+
+    client.subscribe("home/leds", QoS::AtLeastOnce).unwrap();
+
+    let current_animation: Arc<Mutex<rainbow::Rainbow>> = Arc::new(Mutex::new(rainbow::Rainbow::new(STRIP_LENGTH, WHEEL_LENGTH)));
+    let current_animation_clone = Arc::clone(&current_animation);
+
+    thread::spawn(move || {
+        for notification in connection.iter() {
+            if let Ok(event) = notification {
+                if let rumqttc::Event::Incoming(rumqttc::Packet::Publish(p)) = event {
+                    if let Ok(s) = std::str::from_utf8(&p.payload) {
+                        println!("Received: {}", s);
+                        let mut current_animation = current_animation_clone.lock().unwrap();
+                        match s {
+                            "rainbow" => {
+                                *current_animation = rainbow::Rainbow::new(STRIP_LENGTH, WHEEL_LENGTH);
+                                current_animation.start();
+                            },
+                            "off" => {
+                                current_animation.stop();
+                            },
+                            _ => {
+                                println!("Unknown command: {}", s);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    let mut controller: rs_ws281x::Controller = match ControllerBuilder::new()
         // default
         .freq(800_000)
         // default
@@ -42,7 +59,7 @@ fn main(){
                 .pin(18)
                 .count(STRIP_LENGTH)
                 .strip_type(StripType::Ws2811Rgb)
-                .brightness(255)
+                .brightness(127)
                 .build()
         )
         .build() {
@@ -53,25 +70,9 @@ fn main(){
         }
     };
 
-    let mut angle: i32 = 0;
-
     loop {
-        angle = (angle + 1) % 360;
-
-        {
-            let leds = controller.leds_mut(0);
-            let mut last_led = [0, 0, 0, 0];
-            for led in leds {
-                let current_led = *led;
-                *led = last_led;
-                last_led = current_led;
-            }
-        }
-        {
-            let leds = controller.leds_mut(0);
-            let res = hue_to_rgb(angle as f64, 1.0, 0.5);
-            leds[0] = [res.2, res.1, res.0, 0];
-        }
+        let mut current_animation = current_animation.lock().unwrap();
+        current_animation.next_frame(&mut controller);
 
         controller.render().unwrap();
         thread::sleep(time::Duration::from_millis(20));
