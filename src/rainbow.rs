@@ -56,7 +56,7 @@ impl Animation for Rainbow {
             leds[0] = [0, 0, 0, 0]; // Turn off the first led (will propagate to the rest of the strip)
         }
 
-        self.running && controller.leds(0)[(self.wheel_length - 1) as usize] != [0, 0, 0, 0]
+        self.running || controller.leds(0)[(self.wheel_length - 1) as usize] != [0, 0, 0, 0]
     }
 
     fn start(&mut self) -> () {
