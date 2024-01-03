@@ -16,9 +16,9 @@ impl Off {
 
 impl Animation for Off {
     fn next_frame(&mut self, controller: &mut Controller) -> bool {
-        if self.running {
-            let leds = controller.leds_mut(0);
-            leds[0] = [0, 0, 0, 0]; // Turn off the first led (will propagate to the rest of the strip)
+        let leds = controller.leds_mut(0);
+        for led in leds.iter_mut() {
+            *led = [0, 0, 0, 0];
         }
 
         self.running
