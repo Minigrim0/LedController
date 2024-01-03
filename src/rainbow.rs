@@ -45,11 +45,11 @@ impl Animation for Rainbow {
             }
             for index in self.wheel_length..self.strip_length {
                 if leds[index as usize][0] < 127 && self.running {
-                    for elem in 0..2 {
+                    for elem in 0..3 {
                         leds[index as usize][elem] += 1;
                     }
                 } else if leds[index as usize][0] > 0 && !self.running {
-                    for elem in 0..2 {
+                    for elem in 0..3 {
                         leds[index as usize][elem] -= 1;
                     }
                 } else {
