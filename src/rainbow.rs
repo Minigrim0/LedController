@@ -23,21 +23,11 @@ impl Rainbow {
 }
 
 impl Animation for Rainbow {
-    /// Computes and renders the next frame of the animation to the controller
-    /// 
-    /// # Arguments
-    /// 
-    /// * `controller` - The controller to render the next frame to
-    /// 
-    /// # Returns
-    /// 
-    /// * `bool` - True if the animation is still running, false otherwise
     fn next_frame(&mut self, controller: &mut Controller) -> bool {
         self.angle = (self.angle + 1) % 360;
         let mut still_running = self.running;
 
         {
-
             let leds = controller.leds_mut(0);
             let mut last_led = [0, 0, 0, 0];
             for index in 0..self.wheel_length {
