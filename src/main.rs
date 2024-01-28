@@ -28,15 +28,14 @@ fn main(){
     let next_animation_name: Arc<Mutex<String>> = Arc::new(Mutex::new("".to_string()));
     let next_animation_name_clone = Arc::clone(&next_animation_name);
 
-    // MQTT
-    let mut mqttoptions = MqttOptions::new("rust_client", "trappe.local", 1883);
-    mqttoptions.set_keep_alive(time::Duration::new(5, 0));
-
-    let (mut client, mut connection) = Client::new(mqttoptions, 10);
-
-    client.subscribe("home/leds", QoS::AtLeastOnce).unwrap();
-
     thread::spawn(move || {
+        // MQTT
+        let mut mqttoptions = MqttOptions::new("3d_leds", "trappe.local", 1883);
+        mqttoptions.set_keep_alive(time::Duration::new(60, 0));
+
+        let (mut client, mut connection) = Client::new(mqttoptions, 10);
+        client.subscribe("home/leds", QoS::AtLeastOnce).unwrap();
+
         for notification in connection.iter() {
             if let Ok(event) = notification {
                 if let rumqttc::Event::Incoming(rumqttc::Packet::Publish(p)) = event {
@@ -51,6 +50,10 @@ fn main(){
                         *next_animation_name = s.to_string();
                     }
                 }
+            } else if let Err(error) = notification {
+                println!("Connection error {}\nTrying to reconnect...", error.to_string());
+                client.subscribe("home/leds", QoS::AtLeastOnce).unwrap();
+                continue;
             }
         }
     });
@@ -81,7 +84,7 @@ fn main(){
         // Check if current animation is different to the next animation and that the current animation is not stopping
         if current_animation.name().ne(next_animation_name.lock().unwrap().as_str()) && !current_animation.stopping() {
             println!("Stopping animation: {}", current_animation.name());
-            current_animation.stop();            
+            current_animation.stop();
         }
 
         // Save the result of next_frame to a variable so that we can check if the animation has changed
@@ -111,7 +114,7 @@ fn main(){
                 };
 
                 // Create the new animation
-                current_animation = animation_factory();                
+                current_animation = animation_factory();
                 current_animation.start();
             }
         }
