@@ -1,3 +1,5 @@
+use std::thread::current;
+
 use rand::Rng;
 use rs_ws281x::Controller;
 
@@ -65,7 +67,7 @@ impl Animation for Chase {
                     // Light up previous led & light off the current index's one
                     leds[self.current_index as usize] = [0, 0, 0, 0];
                     if self.current_index > 0 {
-                        leds[(self.current_index - 1) as usize] = [127, 127, 127, 0];
+                        leds[(self.current_index - 1) as usize] = self.color;
                     }
                     self.current_index -= 1;
                     true
@@ -78,17 +80,20 @@ impl Animation for Chase {
                             break;
                         }
                     }
-                    if self.running {
-                        let mut rng = rand::thread_rng();
+                    if self.current_index < 0 {
+                        if self.running {
+                            let mut rng = rand::thread_rng();
+
+                            self.color = [
+                                rng.gen(),
+                                rng.gen(),
+                                rng.gen(),
+                                0
+                            ];
+                        }
 
                         self.current_index = 0;
                         self.status = STATUS::BUILDUP;
-                        self.color = [
-                            rng.gen(),
-                            rng.gen(),
-                            rng.gen(),
-                            0
-                        ];
                     }
                     self.running
                 }
