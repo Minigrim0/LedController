@@ -122,6 +122,6 @@ fn main(){
         }
 
         controller.render().unwrap();
-        thread::sleep(time::Duration::from_millis(20));
+        thread::sleep(time::Duration::from_millis(current_animation.wait_time()));
     }
 }

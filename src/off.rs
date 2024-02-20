@@ -39,4 +39,8 @@ impl Animation for Off {
     fn name(&self) -> &str {
         "off"
     }
+
+    fn wait_time(&self) -> u64 {
+        20
+    }
 }

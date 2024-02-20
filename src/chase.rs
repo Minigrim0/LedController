@@ -124,4 +124,8 @@ impl Animation for Chase {
     fn name(&self) -> &str {
         "chase"
     }
+
+    fn wait_time(&self) -> u64 {
+        10
+    }
 }

@@ -23,4 +23,7 @@ pub trait Animation {
 
     /// Returns the name of the animation
     fn name(&self) -> &str;
+
+    /// Time to wait between to animation frames
+    fn wait_time(&self) -> u64;
 }
