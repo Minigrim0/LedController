@@ -126,6 +126,10 @@ impl Animation for Chase {
     }
 
     fn wait_time(&self) -> u64 {
-        10
+        if self.running {
+            10
+        } else {
+            0
+        }
     }
 }
