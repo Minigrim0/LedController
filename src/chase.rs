@@ -41,6 +41,7 @@ impl Animation for Chase {
                 let leds = controller.leds_mut(0);
                 if leds[self.current_index as usize] == [0, 0, 0, 0] && self.current_index < self.strip_length {
                     leds[self.current_index as usize] = [127, 127, 127, 0];
+                    println!("Current index -1 : {}", (self.current_index - 1) as usize);
                     leds[(self.current_index - 1) as usize] = [0, 0, 0, 0];
                     self.current_index += 1;
                 } else {
