@@ -74,6 +74,7 @@ impl Animation for Chase {
 
     fn start(&mut self) -> () {
         self.running = true;
+        self.status = STATUS::BUILDUP;
     }
 
     fn stop(&mut self) -> () {
