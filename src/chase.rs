@@ -71,6 +71,7 @@ impl Animation for Chase {
                     // find first leds that is lit up
                     let leds = controller.leds_mut(0);
                     for index in 0..self.strip_length {
+                        println!("led at index {} is {:?}", index, leds[index as usize]);
                         if leds[index as usize] != [0, 0, 0, 0] {
                             self.current_index = index;
                             break;
