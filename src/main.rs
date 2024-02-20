@@ -10,6 +10,7 @@ pub mod color;
 pub mod animation;
 pub mod rainbow;
 pub mod off;
+pub mod chase;
 
 fn main(){
     const WHEEL_LENGTH: i32 = 78;
@@ -21,6 +22,7 @@ fn main(){
     let mut animation_factories: HashMap<String, AnimationFactory> = HashMap::new();
     animation_factories.insert("rainbow".to_string(), Arc::new(|| Box::new(rainbow::Rainbow::new(STRIP_LENGTH, WHEEL_LENGTH))));
     animation_factories.insert("off".to_string(), Arc::new(|| Box::new(off::Off::new())));
+    animation_factories.insert("chase".to_string(), Arc::new(|| Box::new(chase::Chase::new(STRIP_LENGTH))));
 
     // Animation holder
     let mut current_animation: Box<dyn Animation> = animation_factories.get("off").unwrap()();

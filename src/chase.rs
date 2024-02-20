@@ -8,8 +8,8 @@ enum STATUS {
     FADEOUT
 }
 
-pub struct chase {
-    status: i8,  // 0 off, 1 build up, 2 fade out
+pub struct Chase {
+    status: STATUS,  // 0 off, 1 build up, 2 fade out
     current_index: i32,
     strip_length: i32,
     running: bool,  // Becomes false when the animation should stop
@@ -18,9 +18,9 @@ pub struct chase {
 // This animation occurs in two phases:
 // 1. Build up: The first led is lit up, then the second, then the third, etc.
 // 2. Fade out: The first led is turned off, then the second, then the third, etc.
-impl chase {
-    pub fn new(strip_length: i32) -> chase {
-        chase {
+impl Chase {
+    pub fn new(strip_length: i32) -> Chase {
+        Chase {
             status: STATUS::OFF,
             current_index: 0,
             strip_length,
@@ -31,7 +31,7 @@ impl chase {
 
 impl Animation for Chase {
     fn next_frame(&mut self, controller: &mut Controller) -> bool {
-        match status {
+        match self.status {
             STATUS::OFF => {
                 self.running = false;
                 return false;
@@ -41,7 +41,7 @@ impl Animation for Chase {
                 let leds = controller.leds_mut(0);
                 if leds[self.current_index as usize] == [0, 0, 0, 0] && self.current_index < self.strip_length {
                     leds[self.current_index as usize] = [127, 127, 127, 0];
-                    leds[self.current_index - 1 as usize] = [0, 0, 0, 0];
+                    leds[(self.current_index - 1) as usize] = [0, 0, 0, 0];
                     self.current_index += 1;
                 } else {
                     // Step into fade out phase
@@ -66,7 +66,25 @@ impl Animation for Chase {
                         }
                     }
                 }
+
+                return true;
             },
         }
+    }
+
+    fn start(&mut self) -> () {
+        self.running = true;
+    }
+
+    fn stop(&mut self) -> () {
+        self.running = false;
+    }
+
+    fn stopping(&self) -> bool {
+        !self.running
+    }
+
+    fn name(&self) -> &str {
+        "chase"
     }
 }
