@@ -1,5 +1,3 @@
-use std::thread::current;
-
 use rand::Rng;
 use rs_ws281x::Controller;
 
