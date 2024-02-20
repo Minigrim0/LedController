@@ -32,7 +32,7 @@ fn main(){
 
     thread::spawn(move || {
         // MQTT
-        let mut mqttoptions = MqttOptions::new("3d_leds", "trappe.local", 1883);
+        let mut mqttoptions = MqttOptions::new("3d_leds", "192.168.68.61", 1883);
         mqttoptions.set_keep_alive(time::Duration::new(60, 0));
 
         let (mut client, mut connection) = Client::new(mqttoptions, 10);
