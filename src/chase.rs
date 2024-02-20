@@ -93,7 +93,7 @@ impl Animation for Chase {
                         self.current_index = 0;
                         self.status = STATUS::BUILDUP;
                     }
-                    self.running
+                    self.running || self.current_index > 0
                 }
             },
         }
