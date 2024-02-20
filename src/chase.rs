@@ -1,3 +1,4 @@
+use rand::Rng;
 use rs_ws281x::Controller;
 
 use crate::animation::Animation;
@@ -12,6 +13,7 @@ pub struct Chase {
     status: STATUS,  // 0 off, 1 build up, 2 fade out
     current_index: i32,
     strip_length: i32,
+    color: [u8; 4],
     running: bool,  // Becomes false when the animation should stop
 }
 
@@ -23,6 +25,7 @@ impl Chase {
         Chase {
             status: STATUS::OFF,
             current_index: 0,
+            color: [0, 0, 0, 0],
             strip_length,
             running: false,
         }
@@ -34,28 +37,38 @@ impl Animation for Chase {
         match self.status {
             STATUS::OFF => {
                 self.running = false;
-                return false;
+                false
             },
             STATUS::BUILDUP => {
                 self.running = true;
                 let leds = controller.leds_mut(0);
-                if leds[self.current_index as usize] == [0, 0, 0, 0] && self.current_index < self.strip_length {
-                    leds[self.current_index as usize] = [127, 127, 127, 0];
-                    leds[(self.current_index - 1) as usize] = [0, 0, 0, 0];
+                if self.current_index < self.strip_length && leds[self.current_index as usize] == [0, 0, 0, 0] {
+                    leds[self.current_index as usize] = self.color;
+                    if self.current_index > 0 {
+                        leds[(self.current_index - 1) as usize] = [0, 0, 0, 0];
+                    }
                     self.current_index += 1;
                 } else {
                     // Step into fade out phase
                     if self.current_index == 0 {
                         self.status = STATUS::FADEOUT;
+                        self.current_index = -1;
                     }
                     self.current_index = 0;
                 }
 
-                return true;
+                true
             },
             STATUS::FADEOUT => {
-                if self.current_index - 1 >= 0 {
+                let leds = controller.leds_mut(0);
+                if self.current_index >= 0 {
                     // Light up previous led & light off the current index's one
+                    leds[self.current_index as usize] = [0, 0, 0, 0];
+                    if self.current_index > 0 {
+                        leds[(self.current_index - 1) as usize] = self.color;
+                    }
+                    self.current_index -= 1;
+                    true
                 } else {
                     // find first leds that is lit up
                     let leds = controller.leds_mut(0);
@@ -65,20 +78,43 @@ impl Animation for Chase {
                             break;
                         }
                     }
-                }
+                    if self.current_index < 0 {
+                        if self.running {
+                            let mut rng = rand::thread_rng();
 
-                return true;
+                            self.color = [
+                                rng.gen(),
+                                rng.gen(),
+                                rng.gen(),
+                                0
+                            ];
+                        }
+
+                        self.current_index = 0;
+                        self.status = STATUS::BUILDUP;
+                    }
+                    self.running || self.current_index > 0
+                }
             },
         }
     }
 
     fn start(&mut self) -> () {
+        let mut rng = rand::thread_rng();
+
         self.running = true;
         self.status = STATUS::BUILDUP;
+        self.color = [
+            rng.gen(),
+            rng.gen(),
+            rng.gen(),
+            0
+        ];
     }
 
     fn stop(&mut self) -> () {
         self.running = false;
+        self.status = STATUS::FADEOUT;
     }
 
     fn stopping(&self) -> bool {
@@ -87,5 +123,13 @@ impl Animation for Chase {
 
     fn name(&self) -> &str {
         "chase"
+    }
+
+    fn wait_time(&self) -> u64 {
+        if self.running {
+            10
+        } else {
+            0
+        }
     }
 }

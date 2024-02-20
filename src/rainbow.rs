@@ -82,4 +82,8 @@ impl Animation for Rainbow {
     fn name(&self) -> &str {
         "rainbow"
     }
+
+    fn wait_time(&self) -> u64 {
+        20
+    }
 }

@@ -22,7 +22,7 @@ fn main(){
     let mut animation_factories: HashMap<String, AnimationFactory> = HashMap::new();
     animation_factories.insert("rainbow".to_string(), Arc::new(|| Box::new(rainbow::Rainbow::new(STRIP_LENGTH, WHEEL_LENGTH))));
     animation_factories.insert("off".to_string(), Arc::new(|| Box::new(off::Off::new())));
-    animation_factories.insert("chase".to_string(), Arc::new(|| Box::new(chase::Chase::new(STRIP_LENGTH))));
+    animation_factories.insert("chase".to_string(), Arc::new(|| Box::new(chase::Chase::new(WHEEL_LENGTH))));
 
     // Animation holder
     let mut current_animation: Box<dyn Animation> = animation_factories.get("off").unwrap()();
@@ -122,6 +122,6 @@ fn main(){
         }
 
         controller.render().unwrap();
-        thread::sleep(time::Duration::from_millis(20));
+        thread::sleep(time::Duration::from_millis(current_animation.wait_time()));
     }
 }
