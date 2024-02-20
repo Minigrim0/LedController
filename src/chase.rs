@@ -2,6 +2,12 @@ use rs_ws281x::Controller;
 
 use crate::animation::Animation;
 
+enum STATUS {
+    OFF,
+    BUILDUP,
+    FADEOUT
+}
+
 pub struct chase {
     status: i8,  // 0 off, 1 build up, 2 fade out
     current_index: i32,
@@ -15,7 +21,7 @@ pub struct chase {
 impl chase {
     pub fn new(strip_length: i32) -> chase {
         chase {
-            status: 0,
+            status: STATUS::OFF,
             current_index: 0,
             strip_length,
             running: false,
@@ -26,11 +32,11 @@ impl chase {
 impl Animation for Chase {
     fn next_frame(&mut self, controller: &mut Controller) -> bool {
         match status {
-            0 => {
+            STATUS::OFF => {
                 self.running = false;
                 return false;
             },
-            1 => {
+            STATUS::BUILDUP => {
                 self.running = true;
                 let leds = controller.leds_mut(0);
                 if leds[self.current_index as usize] == [0, 0, 0, 0] && self.current_index < self.strip_length {
@@ -40,24 +46,27 @@ impl Animation for Chase {
                 } else {
                     // Step into fade out phase
                     if self.current_index == 0 {
-                        self.status = 2;
+                        self.status = STATUS::FADEOUT;
                     }
                     self.current_index = 0;
                 }
 
                 return true;
             },
-            2 => {
-                // find first leds that is lit up
-                let leds = controller.leds_mut(0);
-                let mut first_lit_led = 0;
-                for index in 0..self.strip_length {
-                    if leds[index as usize] != [0, 0, 0, 0] {
-                        first_lit_led = index;
-                        break;
+            STATUS::FADEOUT => {
+                if self.current_index - 1 >= 0 {
+                    // Light up previous led & light off the current index's one
+                } else {
+                    // find first leds that is lit up
+                    let leds = controller.leds_mut(0);
+                    for index in 0..self.strip_length {
+                        if leds[index as usize] != [0, 0, 0, 0] {
+                            self.current_index = index;
+                            break;
+                        }
                     }
                 }
-
             },
         }
     }
+}
