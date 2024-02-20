@@ -1,3 +1,4 @@
+use rand::Rng;
 use rs_ws281x::Controller;
 
 use crate::animation::Animation;
@@ -77,8 +78,18 @@ impl Animation for Chase {
                             break;
                         }
                     }
-                    self.current_index = 0;
-                    self.status = STATUS::BUILDUP;
+                    if self.running {
+                        let mut rng = rand::thread_rng();
+
+                        self.current_index = 0;
+                        self.status = STATUS::BUILDUP;
+                        self.color = [
+                            rng.gen(),
+                            rng.gen(),
+                            rng.gen(),
+                            0
+                        ];
+                    }
                     self.running
                 }
             },
@@ -86,8 +97,16 @@ impl Animation for Chase {
     }
 
     fn start(&mut self) -> () {
+        let mut rng = rand::thread_rng();
+
         self.running = true;
         self.status = STATUS::BUILDUP;
+        self.color = [
+            rng.gen(),
+            rng.gen(),
+            rng.gen(),
+            0
+        ];
     }
 
     fn stop(&mut self) -> () {
