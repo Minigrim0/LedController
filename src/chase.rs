@@ -39,7 +39,7 @@ impl Animation for Chase {
             STATUS::BUILDUP => {
                 self.running = true;
                 let leds = controller.leds_mut(0);
-                if leds[self.current_index as usize] == [0, 0, 0, 0] && self.current_index < self.strip_length {
+                if self.current_index < self.strip_length && leds[self.current_index as usize] == [0, 0, 0, 0] {
                     leds[self.current_index as usize] = [127, 127, 127, 0];
                     if self.current_index > 0 {
                         leds[(self.current_index - 1) as usize] = [0, 0, 0, 0];
