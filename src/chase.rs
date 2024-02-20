@@ -61,8 +61,10 @@ impl Animation for Chase {
                 let leds = controller.leds_mut(0);
                 if self.current_index >= 0 {
                     // Light up previous led & light off the current index's one
+                    println!("FADEOUT - Turning off {}", self.current_index);
                     leds[self.current_index as usize] = [0, 0, 0, 0];
                     if self.current_index > 0 {
+                        println!("        - Turning on  {}", self.current_index - 1);
                         leds[(self.current_index - 1) as usize] = [127, 127, 127, 0];
                     }
                 } else {
