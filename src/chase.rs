@@ -12,6 +12,7 @@ pub struct Chase {
     status: STATUS,  // 0 off, 1 build up, 2 fade out
     current_index: i32,
     strip_length: i32,
+    color: [u8; 4],
     running: bool,  // Becomes false when the animation should stop
 }
 
@@ -23,6 +24,7 @@ impl Chase {
         Chase {
             status: STATUS::OFF,
             current_index: 0,
+            color: [0, 0, 0, 0],
             strip_length,
             running: false,
         }
@@ -34,13 +36,13 @@ impl Animation for Chase {
         match self.status {
             STATUS::OFF => {
                 self.running = false;
-                return false;
+                false
             },
             STATUS::BUILDUP => {
                 self.running = true;
                 let leds = controller.leds_mut(0);
                 if self.current_index < self.strip_length && leds[self.current_index as usize] == [0, 0, 0, 0] {
-                    leds[self.current_index as usize] = [127, 127, 127, 0];
+                    leds[self.current_index as usize] = self.color;
                     if self.current_index > 0 {
                         leds[(self.current_index - 1) as usize] = [0, 0, 0, 0];
                     }
@@ -54,33 +56,31 @@ impl Animation for Chase {
                     self.current_index = 0;
                 }
 
-                return true;
+                true
             },
             STATUS::FADEOUT => {
-                self.running = true;
                 let leds = controller.leds_mut(0);
                 if self.current_index >= 0 {
                     // Light up previous led & light off the current index's one
-                    println!("FADEOUT - Turning off {}", self.current_index);
                     leds[self.current_index as usize] = [0, 0, 0, 0];
                     if self.current_index > 0 {
-                        println!("        - Turning on  {}", self.current_index - 1);
                         leds[(self.current_index - 1) as usize] = [127, 127, 127, 0];
                     }
                     self.current_index -= 1;
+                    true
                 } else {
                     // find first leds that is lit up
                     let leds = controller.leds_mut(0);
                     for index in 0..self.strip_length {
-                        println!("led at index {} is {:?}", index, leds[index as usize]);
                         if leds[index as usize] != [0, 0, 0, 0] {
                             self.current_index = index;
                             break;
                         }
                     }
+                    self.current_index = 0;
+                    self.status = STATUS::BUILDUP;
+                    self.running
                 }
-
-                return true;
             },
         }
     }
@@ -92,6 +92,7 @@ impl Animation for Chase {
 
     fn stop(&mut self) -> () {
         self.running = false;
+        self.status = STATUS::FADEOUT;
     }
 
     fn stopping(&self) -> bool {
