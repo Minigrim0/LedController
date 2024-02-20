@@ -67,6 +67,7 @@ impl Animation for Chase {
                         println!("        - Turning on  {}", self.current_index - 1);
                         leds[(self.current_index - 1) as usize] = [127, 127, 127, 0];
                     }
+                    self.current_index -= 1;
                 } else {
                     // find first leds that is lit up
                     let leds = controller.leds_mut(0);
