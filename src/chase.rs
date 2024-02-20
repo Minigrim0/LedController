@@ -49,6 +49,7 @@ impl Animation for Chase {
                     // Step into fade out phase
                     if self.current_index == 0 {
                         self.status = STATUS::FADEOUT;
+                        self.current_index = -1;
                     }
                     self.current_index = 0;
                 }
@@ -56,8 +57,14 @@ impl Animation for Chase {
                 return true;
             },
             STATUS::FADEOUT => {
-                if self.current_index - 1 >= 0 {
+                self.running = true;
+                let leds = controller.leds_mut(0);
+                if self.current_index >= 0 {
                     // Light up previous led & light off the current index's one
+                    leds[self.current_index as usize] = [0, 0, 0, 0];
+                    if self.current_index > 0 {
+                        leds[(self.current_index - 1) as usize] = [127, 127, 127, 0];
+                    }
                 } else {
                     // find first leds that is lit up
                     let leds = controller.leds_mut(0);
