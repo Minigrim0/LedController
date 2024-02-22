@@ -65,7 +65,7 @@ impl Animation for Chase {
                     // Light up previous led & light off the current index's one
                     leds[self.current_index as usize] = [0, 0, 0, 0];
                     if self.current_index > 0 {
-                        let angle = self.current_index / self.strip_length * 360;
+                        let angle = (self.current_index as f32 / self.strip_length as f32) * 360.0;
                         let res = hue_to_rgb(angle as f64, 1.0, 0.5);
                         leds[(self.current_index - 1) as usize] = [res.0, res.1, res.2, 0];
                     }
