@@ -9,6 +9,7 @@ use crate::animation::Animation;
 pub mod color;
 pub mod animation;
 pub mod rainbow;
+pub mod static_rainbow;
 pub mod off;
 pub mod chase;
 
@@ -21,6 +22,7 @@ fn main(){
 
     let mut animation_factories: HashMap<String, AnimationFactory> = HashMap::new();
     animation_factories.insert("rainbow".to_string(), Arc::new(|| Box::new(rainbow::Rainbow::new(STRIP_LENGTH, WHEEL_LENGTH))));
+    animation_factories.insert("srainbow".to_string(), Arc::new(|| Box::new(static_rainbow::SRainbow::new(STRIP_LENGTH, WHEEL_LENGTH))));
     animation_factories.insert("off".to_string(), Arc::new(|| Box::new(off::Off::new())));
     animation_factories.insert("chase".to_string(), Arc::new(|| Box::new(chase::Chase::new(WHEEL_LENGTH))));
 
