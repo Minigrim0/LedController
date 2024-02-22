@@ -1,7 +1,7 @@
-use rand::Rng;
 use rs_ws281x::Controller;
 
 use crate::animation::Animation;
+use crate::color::hue_to_rgb;
 
 enum STATUS {
     OFF,
@@ -13,7 +13,6 @@ pub struct Chase {
     status: STATUS,  // 0 off, 1 build up, 2 fade out
     current_index: i32,
     strip_length: i32,
-    color: [u8; 4],
     running: bool,  // Becomes false when the animation should stop
 }
 
@@ -25,7 +24,6 @@ impl Chase {
         Chase {
             status: STATUS::OFF,
             current_index: 0,
-            color: [0, 0, 0, 0],
             strip_length,
             running: false,
         }
@@ -43,7 +41,9 @@ impl Animation for Chase {
                 self.running = true;
                 let leds = controller.leds_mut(0);
                 if self.current_index < self.strip_length && leds[self.current_index as usize] == [0, 0, 0, 0] {
-                    leds[self.current_index as usize] = self.color;
+                    let angle = (self.current_index as f32 / self.strip_length as f32) * 360.0;
+                    let res = hue_to_rgb(angle as f64, 1.0, 0.5);
+                    leds[self.current_index as usize] = [res.0, res.1, res.2, 0];
                     if self.current_index > 0 {
                         leds[(self.current_index - 1) as usize] = [0, 0, 0, 0];
                     }
@@ -65,7 +65,9 @@ impl Animation for Chase {
                     // Light up previous led & light off the current index's one
                     leds[self.current_index as usize] = [0, 0, 0, 0];
                     if self.current_index > 0 {
-                        leds[(self.current_index - 1) as usize] = self.color;
+                        let angle = (self.current_index as f32 / self.strip_length as f32) * 360.0;
+                        let res = hue_to_rgb(angle as f64, 1.0, 0.5);
+                        leds[(self.current_index - 1) as usize] = [res.0, res.1, res.2, 0];
                     }
                     self.current_index -= 1;
                     true
@@ -79,17 +81,6 @@ impl Animation for Chase {
                         }
                     }
                     if self.current_index < 0 {
-                        if self.running {
-                            let mut rng = rand::thread_rng();
-
-                            self.color = [
-                                rng.gen(),
-                                rng.gen(),
-                                rng.gen(),
-                                0
-                            ];
-                        }
-
                         self.current_index = 0;
                         self.status = STATUS::BUILDUP;
                     }
@@ -100,16 +91,8 @@ impl Animation for Chase {
     }
 
     fn start(&mut self) -> () {
-        let mut rng = rand::thread_rng();
-
         self.running = true;
         self.status = STATUS::BUILDUP;
-        self.color = [
-            rng.gen(),
-            rng.gen(),
-            rng.gen(),
-            0
-        ];
     }
 
     fn stop(&mut self) -> () {
