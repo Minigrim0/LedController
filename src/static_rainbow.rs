@@ -9,6 +9,8 @@ enum STATUS {
     FADEOUT
 }
 
+const MAX_BRIGHTNESS: f64 = 127.0;
+
 /// This struct represents a simple srainbow animation
 pub struct SRainbow {
     angle: i32,
@@ -30,6 +32,15 @@ impl SRainbow {
             running: false,
         }
     }
+}
+
+fn brightnessed(color: (u8, u8, u8), brightness: u8) -> [u8; 4] {
+    [
+        ((color.0 as f64) * (brightness as f64) / MAX_BRIGHTNESS) as u8,
+        ((color.0 as f64) * (brightness as f64) / MAX_BRIGHTNESS) as u8,
+        ((color.0 as f64) * (brightness as f64) / MAX_BRIGHTNESS) as u8,
+        0
+    ]
 }
 
 impl Animation for SRainbow {
@@ -57,10 +68,10 @@ impl Animation for SRainbow {
         let leds = controller.leds_mut(0);
         let res = hue_to_rgb(self.angle as f64, 1.0, 0.5);
         for x in 0..self.wheel_length {
-            leds[x as usize] = [res.2, res.1, res.0, self.brightness];
+            leds[x as usize] = brightnessed(res, self.brightness);
         }
         for x in self.wheel_length..self.strip_length {
-            leds[x as usize] = [127, 127, 127, self.brightness];
+            leds[x as usize] = brightnessed((127, 127, 127), self.brightness);
         }
 
         self.running
