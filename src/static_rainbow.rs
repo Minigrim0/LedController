@@ -37,8 +37,8 @@ impl SRainbow {
 fn brightnessed(color: (u8, u8, u8), brightness: u8) -> [u8; 4] {
     [
         ((color.0 as f64) * (brightness as f64) / MAX_BRIGHTNESS) as u8,
-        ((color.0 as f64) * (brightness as f64) / MAX_BRIGHTNESS) as u8,
-        ((color.0 as f64) * (brightness as f64) / MAX_BRIGHTNESS) as u8,
+        ((color.1 as f64) * (brightness as f64) / MAX_BRIGHTNESS) as u8,
+        ((color.2 as f64) * (brightness as f64) / MAX_BRIGHTNESS) as u8,
         0
     ]
 }
