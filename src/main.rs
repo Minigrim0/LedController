@@ -123,6 +123,17 @@ fn main(){
                     Some(f) => f,
                     None => {
                         warn!("Unable to find animation factory for animation: `{}` defaulting to off", next_animation);
+                        // Default to off and set string to off
+
+                        let mut next_animation_name = match next_animation_name.lock() {
+                            Ok(n) => n,
+                            Err(e) => {
+                                error!("Unable to lock next_animation_name: {}", e);
+                                continue;
+                            }
+                        };
+                        *next_animation_name = "off".to_string();
+
                         animation_factories.get("off").unwrap()
                     }
                 };
