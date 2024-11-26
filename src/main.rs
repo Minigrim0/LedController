@@ -3,6 +3,9 @@ use rumqttc::{MqttOptions, Client, QoS};
 use std::collections::HashMap;
 use std::{thread, time};
 use std::sync::{Arc, Mutex};
+use std::env;
+use colog;
+use log::{info, warn, error};
 
 use crate::animation::Animation;
 
@@ -14,6 +17,8 @@ pub mod off;
 pub mod chase;
 
 fn main(){
+    colog::init();
+
     const WHEEL_LENGTH: i32 = 78;
     const STRIP_LENGTH: i32 = 96;
 
@@ -34,11 +39,16 @@ fn main(){
 
     thread::spawn(move || {
         // MQTT
-        let mut mqttoptions = MqttOptions::new("3d_leds", "192.168.68.61", 1883);
+        let device_name = env::var("DEVICE_NAME").unwrap_or("DDD_leds".to_string());
+        let mqtt_host = env::var("MQTT_HOST").unwrap_or("localhost".to_string());
+        let mqtt_port = env::var("MQTT_PORT").unwrap_or("1883".to_string()).parse::<u16>().unwrap_or(1883);
+        let mqtt_channel = env::var("MQTT_CHANNEL").unwrap_or("home/leds".to_string());
+
+        let mut mqttoptions = MqttOptions::new(device_name, mqtt_host, mqtt_port);
         mqttoptions.set_keep_alive(time::Duration::new(60, 0));
 
         let (mut client, mut connection) = Client::new(mqttoptions, 10);
-        client.subscribe("home/leds", QoS::AtLeastOnce).unwrap();
+        client.subscribe(&mqtt_channel, QoS::AtLeastOnce).unwrap();
 
         for notification in connection.iter() {
             if let Ok(event) = notification {
@@ -47,7 +57,7 @@ fn main(){
                         let mut next_animation_name = match next_animation_name_clone.lock() {
                             Ok(n) => n,
                             Err(e) => {
-                                println!("Unable to lock next_animation_name: {}", e);
+                                error!("Unable to lock next_animation_name: {}", e);
                                 continue;
                             }
                         };
@@ -55,8 +65,8 @@ fn main(){
                     }
                 }
             } else if let Err(error) = notification {
-                println!("Connection error {}\nTrying to reconnect...", error.to_string());
-                client.subscribe("home/leds", QoS::AtLeastOnce).unwrap();
+                warn!("Connection error {}\nTrying to reconnect...", error.to_string());
+                client.subscribe(&mqtt_channel, QoS::AtLeastOnce).unwrap();
                 continue;
             }
         }
@@ -79,7 +89,7 @@ fn main(){
         .build() {
         Ok(c) => c,
         Err(e) => {
-            println!("Unable to setup led controller: {}", e);
+            error!("Unable to setup led controller: {}", e);
             return;
         }
     };
@@ -87,7 +97,7 @@ fn main(){
     loop {
         // Check if current animation is different to the next animation and that the current animation is not stopping
         if current_animation.name().ne(next_animation_name.lock().unwrap().as_str()) && !current_animation.stopping() {
-            println!("Stopping animation: {}", current_animation.name());
+            info!("Stopping animation: {}", current_animation.name());
             current_animation.stop();
         }
 
@@ -99,20 +109,20 @@ fn main(){
             let next_animation = match next_animation_name.lock() {
                 Ok(n) => n,
                 Err(e) => {
-                    println!("Unable to lock next_animation_name: {}", e);
+                    warn!("Unable to lock next_animation_name: {}", e);
                     continue;
                 }
             };
 
             // If the next animation is not empty, we can start it
             if !next_animation.is_empty() {
-                println!("Starting animation: {}", next_animation);
+                info!("Starting animation: {}", next_animation);
 
                 // Get the animation factory from the hashmap
                 let animation_factory = match animation_factories.get(next_animation.as_str()) {
                     Some(f) => f,
                     None => {
-                        println!("Unable to find animation factory for animation: `{}` defaulting to off", next_animation);
+                        warn!("Unable to find animation factory for animation: `{}` defaulting to off", next_animation);
                         animation_factories.get("off").unwrap()
                     }
                 };
