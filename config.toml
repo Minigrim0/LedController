@@ -1,0 +1,6 @@
+device_name = "DDD_leds"
+mqtt_host = "localhost"
+mqtt_port = 1883
+mqtt_channel = "home/leds"
+wheel_length = 78
+strip_length = 96

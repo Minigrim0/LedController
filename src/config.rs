@@ -59,4 +59,10 @@ impl Config {
             None => 96
         }
     }
+
+    pub fn dump(&self) {
+        println!("{}", toml::to_string(self)
+            .unwrap_or(
+                "Error while deserializing the configuration".to_string()));
+    }
 }
