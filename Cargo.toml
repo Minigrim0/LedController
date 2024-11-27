@@ -1,5 +1,5 @@
 [package]
-name = "leds"
+name = "minileds"
 description = "A LED controller for ws281x LEDs. The controller support multiple animations and can be controlled via MQTT."
 version = "0.1.0"
 edition = "2021"
@@ -14,11 +14,22 @@ rumqttc = "0.23.0"
 serde = { version = "1.0.215", features = ["derive"] }
 toml = "0.8.19"
 
-[package.metadata.bundle]
-name = "leds"
+[package.metadata.packager]
+product_name = "MiniLEDs"
+version = "0.1.0"
 identifier = "xyz.minigrim0.leds"
+binaries = [{path = "minileds", main = true}]
+out_dir = "target/bundle"
 category = "public.app-category.utilities"
-short_description = "A LED controller for ws281x LEDs."
+homepage = "https://github.com/minigrim0/rpi4-ledcontroller"
+authors = ["minigrim0"]
+resources = [
+    { src = "resources/rpi4-leds.service", target = "/etc/systemd/system/minileds.service" },
+    { src = "config.toml", target = "/etc/minileds.conf" },
+    { src = "resources/icon.png", target = "/usr/share/pixmaps/minileds.png" }
+]
+icons = ["resources/icon.png"]
+description = "A LED controller for ws281x LEDs."
 long_description = """
 A LED controller for ws281x LEDs.
 The controller support multiple animations and can be controlled via MQTT.

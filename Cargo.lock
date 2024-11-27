@@ -398,20 +398,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
-name = "leds"
-version = "0.1.0"
-dependencies = [
- "clap",
- "colog",
- "log",
- "rand",
- "rs_ws281x",
- "rumqttc",
- "serde",
- "toml",
-]
-
-[[package]]
 name = "libc"
 version = "0.2.150"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -438,6 +424,20 @@ name = "memchr"
 version = "2.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f665ee40bc4a3c5590afb1e9677db74a508659dfd71e126420da8274909a0167"
+
+[[package]]
+name = "minileds"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "colog",
+ "log",
+ "rand",
+ "rs_ws281x",
+ "rumqttc",
+ "serde",
+ "toml",
+]
 
 [[package]]
 name = "minimal-lexical"

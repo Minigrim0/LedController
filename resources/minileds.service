@@ -2,7 +2,7 @@
 Description=LED controller for 3D printer's strip
 
 [Service]
-ExecStart=leds
+ExecStart=minileds -c /etc/minileds.conf
 Environment="MQTT_HOST=trappe.local"
 Restart=on-success
 Type=simple
