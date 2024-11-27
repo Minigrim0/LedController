@@ -1,150 +1,16 @@
-use rs_ws281x::{ControllerBuilder, ChannelBuilder, StripType};
-use rumqttc::{MqttOptions, Client, QoS};
-use std::collections::HashMap;
-use std::{thread, time};
-use std::sync::{Arc, Mutex};
-use std::env;
 use colog;
-use log::{info, warn, error};
 
-use crate::animation::Animation;
+mod animations;
+mod config;
+mod app;
+pub mod utils;
 
-pub mod color;
-pub mod animation;
-pub mod rainbow;
-pub mod static_rainbow;
-pub mod off;
-pub mod chase;
+use app::App;
 
 fn main(){
     colog::init();
 
-    const WHEEL_LENGTH: i32 = 78;
-    const STRIP_LENGTH: i32 = 96;
-
-    // Animation factory type
-    type AnimationFactory = Arc<dyn Fn() -> Box<dyn Animation>>;
-
-    let mut animation_factories: HashMap<String, AnimationFactory> = HashMap::new();
-    animation_factories.insert("rainbow".to_string(), Arc::new(|| Box::new(rainbow::Rainbow::new(STRIP_LENGTH, WHEEL_LENGTH))));
-    animation_factories.insert("srainbow".to_string(), Arc::new(|| Box::new(static_rainbow::SRainbow::new(STRIP_LENGTH, WHEEL_LENGTH))));
-    animation_factories.insert("off".to_string(), Arc::new(|| Box::new(off::Off::new())));
-    animation_factories.insert("chase".to_string(), Arc::new(|| Box::new(chase::Chase::new(WHEEL_LENGTH))));
-
-    // Animation holder
-    let mut current_animation: Box<dyn Animation> = animation_factories.get("off").unwrap()();
-
-    let next_animation_name: Arc<Mutex<String>> = Arc::new(Mutex::new("".to_string()));
-    let next_animation_name_clone = Arc::clone(&next_animation_name);
-
-    thread::spawn(move || {
-        // MQTT
-        let device_name = env::var("DEVICE_NAME").unwrap_or("DDD_leds".to_string());
-        let mqtt_host = env::var("MQTT_HOST").unwrap_or("localhost".to_string());
-        let mqtt_port = env::var("MQTT_PORT").unwrap_or("1883".to_string()).parse::<u16>().unwrap_or(1883);
-        let mqtt_channel = env::var("MQTT_CHANNEL").unwrap_or("home/leds".to_string());
-
-        let mut mqttoptions = MqttOptions::new(device_name, mqtt_host, mqtt_port);
-        mqttoptions.set_keep_alive(time::Duration::new(60, 0));
-
-        let (mut client, mut connection) = Client::new(mqttoptions, 10);
-        client.subscribe(&mqtt_channel, QoS::AtLeastOnce).unwrap();
-
-        for notification in connection.iter() {
-            if let Ok(event) = notification {
-                if let rumqttc::Event::Incoming(rumqttc::Packet::Publish(p)) = event {
-                    if let Ok(s) = std::str::from_utf8(&p.payload) {
-                        let mut next_animation_name = match next_animation_name_clone.lock() {
-                            Ok(n) => n,
-                            Err(e) => {
-                                error!("Unable to lock next_animation_name: {}", e);
-                                continue;
-                            }
-                        };
-                        *next_animation_name = s.to_string();
-                    }
-                }
-            } else if let Err(error) = notification {
-                warn!("Connection error {}\nTrying to reconnect...", error.to_string());
-                client.subscribe(&mqtt_channel, QoS::AtLeastOnce).unwrap();
-                continue;
-            }
-        }
-    });
-
-    let mut controller: rs_ws281x::Controller = match ControllerBuilder::new()
-        // default
-        .freq(800_000)
-        // default
-        .dma(10)
-        .channel(
-            0,
-            ChannelBuilder::new()
-                .pin(18)
-                .count(STRIP_LENGTH)
-                .strip_type(StripType::Ws2811Rgb)
-                .brightness(127)
-                .build()
-        )
-        .build() {
-        Ok(c) => c,
-        Err(e) => {
-            error!("Unable to setup led controller: {}", e);
-            return;
-        }
-    };
-
-    loop {
-        // Check if current animation is different to the next animation and that the current animation is not stopping
-        if current_animation.name().ne(next_animation_name.lock().unwrap().as_str()) && !current_animation.stopping() {
-            info!("Stopping animation: {}", current_animation.name());
-            current_animation.stop();
-        }
-
-        // Save the result of next_frame to a variable so that we can check if the animation has changed
-        let res: bool = current_animation.next_frame(&mut controller);
-
-        // If the animation stopped, we can use next_animation to start the next animation
-        if !res {
-            let next_animation = match next_animation_name.lock() {
-                Ok(n) => n,
-                Err(e) => {
-                    warn!("Unable to lock next_animation_name: {}", e);
-                    continue;
-                }
-            };
-
-            // If the next animation is not empty, we can start it
-            if !next_animation.is_empty() {
-                info!("Starting animation: {}", next_animation);
-
-                // Get the animation factory from the hashmap
-                let animation_factory = match animation_factories.get(next_animation.as_str()) {
-                    Some(f) => f,
-                    None => {
-                        warn!("Unable to find animation factory for animation: `{}` defaulting to off", next_animation);
-                        // Default to off and set string to off
-
-                        let mut next_animation_name = match next_animation_name.lock() {
-                            Ok(n) => n,
-                            Err(e) => {
-                                error!("Unable to lock next_animation_name: {}", e);
-                                continue;
-                            }
-                        };
-                        *next_animation_name = "off".to_string();
-
-                        animation_factories.get("off").unwrap()
-                    }
-                };
-
-                // Create the new animation
-                current_animation = animation_factory();
-                current_animation.start();
-            }
-        }
-
-        controller.render().unwrap();
-        thread::sleep(time::Duration::from_millis(current_animation.wait_time()));
-    }
+    let mut app = App::new();
+    app.start_mqtt_listener();
+    app.run();
 }

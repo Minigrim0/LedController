@@ -1,7 +1,7 @@
 use rs_ws281x::Controller;
 
-use crate::animation::Animation;
-use crate::color::hue_to_rgb;
+use super::Animation;
+use crate::utils::hue_to_rgb;
 
 /// This struct represents a simple rainbow animation
 pub struct Rainbow {

@@ -1,5 +1,5 @@
 use rs_ws281x::Controller;
-use crate::animation::Animation;
+use super::Animation;
 
 /// This structure represents the off animation
 pub struct Off {
