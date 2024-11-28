@@ -24,7 +24,7 @@ category = "public.app-category.utilities"
 homepage = "https://github.com/minigrim0/rpi4-ledcontroller"
 authors = ["minigrim0"]
 resources = [
-    { src = "resources/rpi4-leds.service", target = "/etc/systemd/system/minileds.service" },
+    { src = "resources/minileds.service", target = "/etc/systemd/system/minileds.service" },
     { src = "config.toml", target = "/etc/minileds.conf" },
     { src = "resources/icon.png", target = "/usr/share/pixmaps/minileds.png" }
 ]
